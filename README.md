@@ -3,7 +3,7 @@
 [![CI](https://github.com/frankbria/ralph-claude-code/actions/workflows/test.yml/badge.svg)](https://github.com/frankbria/ralph-claude-code/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Version](https://img.shields.io/badge/version-0.9.8-blue)
-![Tests](https://img.shields.io/badge/tests-276%20passing-green)
+![Tests](https://img.shields.io/badge/tests-310%20passing-green)
 [![GitHub Issues](https://img.shields.io/github/issues/frankbria/ralph-claude-code)](https://github.com/frankbria/ralph-claude-code/issues)
 [![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge.svg)](https://github.com/hesreallyhim/awesome-claude-code)
 [![Follow on X](https://img.shields.io/twitter/follow/FrankBria18044?style=social)](https://x.com/FrankBria18044)
@@ -18,7 +18,7 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 
 **Version**: v0.9.8 - Active Development
 **Core Features**: Working and tested
-**Test Coverage**: 276 tests, 100% pass rate
+**Test Coverage**: 310 tests, 100% pass rate
 
 ### What's Working Now
 - Autonomous development loops with intelligent exit detection
@@ -30,10 +30,11 @@ Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code t
 - **Modern CLI flags: `--output-format`, `--allowed-tools`, `--no-continue`**
 - Multi-line error matching for accurate stuck loop detection
 - 5-hour API limit handling with user prompts
-- tmux integration for live monitoring
+- tmux integration for live monitoring (Linux/macOS)
+- **Windows Terminal support for split-pane monitoring (Windows)**
 - PRD import functionality
 - **CI/CD pipeline with GitHub Actions**
-- 276 passing tests across 11 test files
+- 310 passing tests across 12 test files
 
 ### Recent Improvements
 
@@ -415,7 +416,8 @@ my-project/
 
 - **Bash 4.0+** - For script execution
 - **Claude Code CLI** - `npm install -g @anthropic-ai/claude-code`
-- **tmux** - Terminal multiplexer for integrated monitoring (recommended)
+- **tmux** - Terminal multiplexer for integrated monitoring on Linux/macOS (recommended)
+- **Windows Terminal** - For integrated monitoring on Windows
 - **jq** - JSON processing for status tracking
 - **Git** - Version control (projects are initialized as git repos)
 - **Standard Unix tools** - grep, date, etc.
@@ -430,7 +432,7 @@ If you want to run the test suite:
 # Install BATS testing framework
 npm install -g bats bats-support bats-assert
 
-# Run all tests (276 tests)
+# Run all tests (310 tests)
 npm test
 
 # Run specific test suites
@@ -451,14 +453,18 @@ bats tests/integration/test_installation.bats
 ```
 
 Current test status:
-- **276 tests** across 11 test files
-- **100% pass rate** (276/276 passing)
+- **310 tests** across 12 test files
+- **100% pass rate** (310/310 passing)
 - Comprehensive unit and integration tests
 - Specialized tests for JSON parsing, CLI flags, circuit breaker, and installation workflows
 
 > **Note on Coverage**: Bash code coverage measurement with kcov has fundamental limitations when tracing subprocess executions. Test pass rate (100%) is the quality gate. See [bats-core#15](https://github.com/bats-core/bats-core/issues/15) for details.
 
-### Installing tmux
+### Installing Terminal Multiplexer
+
+Ralph supports both tmux (Linux/macOS) and Windows Terminal (Windows) for integrated monitoring.
+
+#### Installing tmux (Linux/macOS)
 
 ```bash
 # Ubuntu/Debian
@@ -469,6 +475,19 @@ brew install tmux
 
 # CentOS/RHEL
 sudo yum install tmux
+```
+
+#### Installing Windows Terminal (Windows)
+
+```bash
+# Microsoft Store (recommended)
+# Search for "Windows Terminal" in Microsoft Store
+
+# Or using winget
+winget install --id Microsoft.WindowsTerminal -e
+
+# Or using chocolatey
+choco install microsoft-windows-terminal
 ```
 
 ## Monitoring and Debugging
@@ -536,7 +555,7 @@ cd ralph-claude-code
 
 # Install dependencies and run tests
 npm install
-npm test  # All 276 tests must pass
+npm test  # All 310 tests must pass
 ```
 
 ### Priority Contribution Areas
@@ -581,7 +600,7 @@ ralph [OPTIONS]
   -c, --calls NUM         Set max calls per hour (default: 100)
   -p, --prompt FILE       Set prompt file (default: PROMPT.md)
   -s, --status            Show current status and exit
-  -m, --monitor           Start with tmux session and live monitor
+  -m, --monitor           Start with split-pane monitoring (tmux or Windows Terminal)
   -v, --verbose           Show detailed progress updates during execution
   -t, --timeout MIN       Set Claude Code execution timeout in minutes (1-120, default: 15)
   --output-format FORMAT  Set output format: json (default) or text
@@ -624,7 +643,7 @@ Ralph is under active development with a clear path to v1.0.0. See [IMPLEMENTATI
 - Core loop functionality with intelligent exit detection
 - Rate limiting (100 calls/hour) and circuit breaker pattern
 - Response analyzer with semantic understanding
-- 276 comprehensive tests (100% pass rate)
+- 310 comprehensive tests (100% pass rate)
 - tmux integration and live monitoring
 - PRD import functionality with modern CLI JSON parsing
 - Installation system and project templates
@@ -634,9 +653,9 @@ Ralph is under active development with a clear path to v1.0.0. See [IMPLEMENTATI
 - Session lifecycle management with auto-reset triggers
 
 **Test Coverage Breakdown:**
-- Unit Tests: 154 (CLI parsing, JSON, exit detection, rate limiting, session continuity)
-- Integration Tests: 122 (loop execution, edge cases, installation, project setup, PRD import)
-- Test Files: 11
+- Unit Tests: 187 (CLI parsing, JSON, exit detection, rate limiting, session continuity, platform utils)
+- Integration Tests: 123 (loop execution, edge cases, installation, project setup, PRD import)
+- Test Files: 12
 
 ### Path to v1.0.0 (~4 weeks)
 

@@ -10,6 +10,7 @@ SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "$SCRIPT_DIR/lib/date_utils.sh"
 source "$SCRIPT_DIR/lib/response_analyzer.sh"
 source "$SCRIPT_DIR/lib/circuit_breaker.sh"
+source "$SCRIPT_DIR/lib/platform_utils.sh"
 
 # Configuration
 PROMPT_FILE="PROMPT.md"
@@ -80,14 +81,34 @@ NC='\033[0m' # No Color
 # Initialize directories
 mkdir -p "$LOG_DIR" "$DOCS_DIR"
 
-# Check if tmux is available
-check_tmux_available() {
-    if ! command -v tmux &> /dev/null; then
-        log_status "ERROR" "tmux is not installed. Please install tmux or run without --monitor flag."
-        echo "Install tmux:"
-        echo "  Ubuntu/Debian: sudo apt-get install tmux"
-        echo "  macOS: brew install tmux"
-        echo "  CentOS/RHEL: sudo yum install tmux"
+# Check if a terminal multiplexer is available for monitoring
+# Returns: "tmux", "windows_terminal", or exits with error if none available
+check_monitor_available() {
+    local multiplexer
+    multiplexer=$(get_available_multiplexer)
+
+    if [[ "$multiplexer" == "tmux" ]]; then
+        log_status "INFO" "Using tmux for integrated monitoring"
+        echo "tmux"
+        return 0
+    elif [[ "$multiplexer" == "windows_terminal" ]]; then
+        log_status "INFO" "Using Windows Terminal for integrated monitoring"
+        echo "windows_terminal"
+        return 0
+    else
+        # Show platform-specific error messages
+        if is_windows; then
+            log_status "ERROR" "Windows Terminal not found. Please install Windows Terminal or run without --monitor flag."
+            echo "Install Windows Terminal:"
+            echo "  Microsoft Store: Search for 'Windows Terminal'"
+            echo "  winget: winget install Microsoft.WindowsTerminal"
+        else
+            log_status "ERROR" "tmux is not installed. Please install tmux or run without --monitor flag."
+            echo "Install tmux:"
+            echo "  Ubuntu/Debian: sudo apt-get install tmux"
+            echo "  macOS: brew install tmux"
+            echo "  CentOS/RHEL: sudo yum install tmux"
+        fi
         exit 1
     fi
 }
@@ -96,22 +117,22 @@ check_tmux_available() {
 setup_tmux_session() {
     local session_name="ralph-$(date +%s)"
     local ralph_home="${RALPH_HOME:-$HOME/.ralph}"
-    
+
     log_status "INFO" "Setting up tmux session: $session_name"
-    
+
     # Create new tmux session detached
     tmux new-session -d -s "$session_name" -c "$(pwd)"
-    
+
     # Split window vertically to create monitor pane on the right
     tmux split-window -h -t "$session_name" -c "$(pwd)"
-    
+
     # Start monitor in the right pane
     if command -v ralph-monitor &> /dev/null; then
         tmux send-keys -t "$session_name:0.1" "ralph-monitor" Enter
     else
         tmux send-keys -t "$session_name:0.1" "'$ralph_home/ralph_monitor.sh'" Enter
     fi
-    
+
     # Start ralph loop in the left pane (exclude tmux flag to avoid recursion)
     local ralph_cmd
     if command -v ralph &> /dev/null; then
@@ -119,30 +140,121 @@ setup_tmux_session() {
     else
         ralph_cmd="'$ralph_home/ralph_loop.sh'"
     fi
-    
+
     if [[ "$MAX_CALLS_PER_HOUR" != "100" ]]; then
         ralph_cmd="$ralph_cmd --calls $MAX_CALLS_PER_HOUR"
     fi
     if [[ "$PROMPT_FILE" != "PROMPT.md" ]]; then
         ralph_cmd="$ralph_cmd --prompt '$PROMPT_FILE'"
     fi
-    
+
     tmux send-keys -t "$session_name:0.0" "$ralph_cmd" Enter
-    
+
     # Focus on left pane (main ralph loop)
     tmux select-pane -t "$session_name:0.0"
-    
+
     # Set window title
     tmux rename-window -t "$session_name:0" "Ralph: Loop | Monitor"
-    
+
     log_status "SUCCESS" "Tmux session created. Attaching to session..."
     log_status "INFO" "Use Ctrl+B then D to detach from session"
     log_status "INFO" "Use 'tmux attach -t $session_name' to reattach"
-    
+
     # Attach to session (this will block until session ends)
     tmux attach-session -t "$session_name"
-    
+
     exit 0
+}
+
+# Setup Windows Terminal session with monitor
+# Windows Terminal supports split panes via wt.exe command line
+setup_windows_terminal_session() {
+    local ralph_home="${RALPH_HOME:-$HOME/.ralph}"
+    local win_cwd
+    win_cwd=$(get_windows_cwd)
+
+    log_status "INFO" "Setting up Windows Terminal session with split panes"
+
+    # Get Git Bash path for Windows Terminal (WT defaults to WSL otherwise)
+    local git_bash
+    git_bash=$(get_git_bash_path)
+    if [[ -z "$git_bash" ]]; then
+        log_status "ERROR" "Git Bash not found. Please install Git for Windows."
+        exit 1
+    fi
+    # Convert to Windows path format for wt.exe
+    local git_bash_win
+    git_bash_win=$(unix_to_windows_path "$git_bash")
+
+    # Build the ralph command using array for shell-injection safety
+    local -a ralph_cmd_parts=()
+    if command -v ralph &> /dev/null; then
+        ralph_cmd_parts+=("ralph")
+    else
+        ralph_cmd_parts+=("bash" "\"$ralph_home/ralph_loop.sh\"")
+    fi
+
+    if [[ "$MAX_CALLS_PER_HOUR" != "100" ]]; then
+        ralph_cmd_parts+=("--calls" "$MAX_CALLS_PER_HOUR")
+    fi
+    if [[ "$PROMPT_FILE" != "PROMPT.md" ]]; then
+        ralph_cmd_parts+=("--prompt" "\"$PROMPT_FILE\"")
+    fi
+
+    # Convert array to string for Windows Terminal -c flag
+    local ralph_cmd="${ralph_cmd_parts[*]}"
+
+    # Build the monitor command using array for shell-injection safety
+    local -a monitor_cmd_parts=()
+    if command -v ralph-monitor &> /dev/null; then
+        monitor_cmd_parts+=("ralph-monitor")
+    else
+        monitor_cmd_parts+=("bash" "\"$ralph_home/ralph_monitor.sh\"")
+    fi
+    local monitor_cmd="${monitor_cmd_parts[*]}"
+
+    # Get Windows Terminal executable
+    local wt_exe
+    wt_exe=$(get_windows_terminal_path)
+
+    if [[ -z "$wt_exe" ]]; then
+        # Try using cmd.exe to launch wt
+        log_status "INFO" "Launching Windows Terminal via cmd.exe..."
+        cmd.exe /c "wt -w 0 nt -d \"$win_cwd\" \"$git_bash_win\" -c \"$ralph_cmd\" ; split-pane -V -d \"$win_cwd\" \"$git_bash_win\" -c \"$monitor_cmd\""
+    else
+        log_status "INFO" "Launching Windows Terminal directly..."
+        # Launch Windows Terminal with split panes
+        # -w 0: Use current window or create new
+        # nt: New tab
+        # split-pane -V: Vertical split (side by side)
+        "$wt_exe" -w 0 nt -d "$win_cwd" "$git_bash_win" -c "$ralph_cmd" \; split-pane -V -d "$win_cwd" "$git_bash_win" -c "$monitor_cmd"
+    fi
+
+    log_status "SUCCESS" "Windows Terminal session launched"
+    log_status "INFO" "Ralph is running in the left pane, monitor in the right pane"
+    log_status "INFO" "Close the terminal window to stop Ralph"
+
+    # Exit this shell since Ralph is now running in Windows Terminal
+    exit 0
+}
+
+# Setup monitor session using the best available multiplexer
+setup_monitor_session() {
+    local multiplexer
+    multiplexer=$(check_monitor_available)
+
+    case "$multiplexer" in
+        tmux)
+            setup_tmux_session
+            ;;
+        windows_terminal)
+            setup_windows_terminal_session
+            ;;
+        *)
+            log_status "ERROR" "No terminal multiplexer available"
+            exit 1
+            ;;
+    esac
 }
 
 # Initialize call tracking
@@ -188,7 +300,7 @@ log_status() {
         "LOOP") color=$PURPLE ;;
     esac
     
-    echo -e "${color}[$timestamp] [$level] $message${NC}"
+    echo -e "${color}[$timestamp] [$level] $message${NC}" >&2
     echo "[$timestamp] [$level] $message" >> "$LOG_DIR/ralph.log"
 }
 
@@ -1175,7 +1287,7 @@ Options:
     -c, --calls NUM         Set max calls per hour (default: $MAX_CALLS_PER_HOUR)
     -p, --prompt FILE       Set prompt file (default: $PROMPT_FILE)
     -s, --status            Show current status and exit
-    -m, --monitor           Start with tmux session and live monitor (requires tmux)
+    -m, --monitor           Start with split-pane monitoring (tmux or Windows Terminal)
     -v, --verbose           Show detailed progress updates during execution
     -t, --timeout MIN       Set Claude Code execution timeout in minutes (default: $CLAUDE_TIMEOUT_MINUTES)
     --reset-circuit         Reset circuit breaker to CLOSED state
@@ -1317,10 +1429,9 @@ done
 
 # Only execute when run directly, not when sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    # If tmux mode requested, set it up
+    # If monitor mode requested, set it up using the best available multiplexer
     if [[ "$USE_TMUX" == "true" ]]; then
-        check_tmux_available
-        setup_tmux_session
+        setup_monitor_session
     fi
 
     # Start the main loop

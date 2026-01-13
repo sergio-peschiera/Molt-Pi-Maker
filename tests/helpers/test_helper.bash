@@ -2,6 +2,11 @@
 # Test Helper Utilities for Ralph Test Suite
 
 # Simple assertion functions (replacing bats-assert)
+fail() {
+    echo "$1"
+    return 1
+}
+
 assert_success() {
     if [ "$status" -ne 0 ]; then
         echo "Expected success but got status $status"
@@ -67,6 +72,11 @@ teardown() {
     # Clean up temp directory
     if [[ -n "$TEST_TEMP_DIR" && -d "$TEST_TEMP_DIR" ]]; then
         rm -rf "$TEST_TEMP_DIR"
+    fi
+
+    # Clean up xargs wrapper directory (Windows compatibility)
+    if [[ -n "$_XARGS_WRAPPER_DIR" && -d "$_XARGS_WRAPPER_DIR" ]]; then
+        rm -rf "$_XARGS_WRAPPER_DIR"
     fi
 }
 
@@ -214,3 +224,36 @@ source_ralph_functions() {
     # We'll extract functions into a separate file for testing
     :
 }
+
+# =============================================================================
+# WINDOWS COMPATIBILITY
+# =============================================================================
+
+# Detect if running on Windows (Git Bash/MSYS/Cygwin)
+is_windows_test_env() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# On Windows, xargs fails with "environment is too large" when functions are exported.
+# Create a wrapper script that runs xargs with a minimal environment.
+if is_windows_test_env; then
+    # Create wrapper directory in temp
+    _XARGS_WRAPPER_DIR="${BATS_TEST_TMPDIR:-/tmp}/xargs_wrapper_$$"
+    mkdir -p "$_XARGS_WRAPPER_DIR"
+
+    # Find real xargs
+    _REAL_XARGS=$(command -v xargs)
+
+    # Create wrapper script - escape variables for runtime expansion
+    cat > "$_XARGS_WRAPPER_DIR/xargs" << WRAPPER_EOF
+#!/bin/bash
+exec env -i PATH="\$PATH" HOME="\$HOME" TERM="\$TERM" "$_REAL_XARGS" "\$@"
+WRAPPER_EOF
+    chmod +x "$_XARGS_WRAPPER_DIR/xargs"
+
+    # Prepend to PATH so our wrapper is found first
+    export PATH="$_XARGS_WRAPPER_DIR:$PATH"
+fi
