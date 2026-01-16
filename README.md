@@ -6,7 +6,7 @@
 ![Tests](https://img.shields.io/badge/tests-308%20passing-green)
 [![GitHub Issues](https://img.shields.io/github/issues/frankbria/ralph-claude-code)](https://github.com/frankbria/ralph-claude-code/issues)
 [![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge.svg)](https://github.com/hesreallyhim/awesome-claude-code)
-[![Follow on X](https://img.shields.io/twitter/follow/FrankBria18044?style=social)](https://x.com/DmitrySolana)
+[![Follow on X](https://img.shields.io/twitter/follow/DmitrySolana?style=social)](https://x.com/DmitrySolana)
 
 > **Autonomous AI development loop with intelligent exit detection and rate limiting**
 
