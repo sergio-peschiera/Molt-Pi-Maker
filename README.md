@@ -726,7 +726,6 @@ Ralph is seeking contributors! See [CONTRIBUTING.md](CONTRIBUTING.md) for the co
 4. **Bug Reports** - Real-world usage feedback and edge cases
 
 ---
-
 **Ready to let AI build your project?** Start with `./install.sh` and let Ralph take it from there!
 
 ## Star History
