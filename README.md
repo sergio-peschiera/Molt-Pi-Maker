@@ -1,4 +1,4 @@
-# 🥧 Molt Pi Maker
+#  Molt Pi Maker
 
 Your AI guide for Molt Pi Maker.
 
