@@ -1,18 +1,28 @@
-# Ralph for Claude Code
+# 🥧 Raspberry Pi Maker
 
-[![CI](https://github.com/frankbria/ralph-claude-code/actions/workflows/test.yml/badge.svg)](https://github.com/frankbria/ralph-claude-code/actions/workflows/test.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Version](https://img.shields.io/badge/version-0.9.9-blue)
-![Tests](https://img.shields.io/badge/tests-308%20passing-green)
-[![GitHub Issues](https://img.shields.io/github/issues/frankbria/ralph-claude-code)](https://github.com/frankbria/ralph-claude-code/issues)
-[![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge.svg)](https://github.com/hesreallyhim/awesome-claude-code)
-[![Follow on X](https://img.shields.io/twitter/follow/DmitrySolana?style=social)](https://x.com/DmitrySolana)
+Your AI guide for Raspberry Pi projects.
 
-> **Autonomous AI development loop with intelligent exit detection and rate limiting**
+## What It Does
 
-Ralph is an implementation of the Geoffrey Huntley's technique for Claude Code that enables continuous autonomous development cycles he named after [Ralph Wiggum](https://ghuntley.com/ralph/). It enables continuous autonomous development cycles where Claude Code iteratively improves your project until completion, with built-in safeguards to prevent infinite loops and API overuse.
+- Generates Python code for GPIO, sensors, cameras
+- Explains wiring pin-by-pin
+- Troubleshoots when things break
+- Teaches as you build
 
-**Install once, use everywhere** - Ralph becomes a global command available in any directory.
+## Quick Start
+
+```python
+from gpiozero import LED
+led = LED(17)
+led.blink()
+```
+
+## Includes
+
+- GPIO pinout reference
+- Common libraries guide
+- Beginner → Advanced projects
+- Troubleshooting tips
 
 ## Project Status
 
