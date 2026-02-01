@@ -1,6 +1,9 @@
-# 🥧 Raspberry Pi Maker
+# 🥧 Molt Pi Maker
 
-Your AI guide for Raspberry Pi projects.
+Your AI guide for Molt Pi Maker.
+
+<img width="1280" height="1180" alt="image" src="https://github.com/user-attachments/assets/528dbd73-12dc-4c1c-94bc-dda1efd9a386" />
+
 
 ## What It Does
 
