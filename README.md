@@ -2,7 +2,7 @@
 
 Your AI guide for Molt Pi Maker.
 
-<img width="1280" height="1180" alt="image" src="https://github.com/user-attachments/assets/528dbd73-12dc-4c1c-94bc-dda1efd9a386" />
+<img width="998" height="278" alt="62a1b8aa3587d40105c1c8f679724744" src="https://github.com/user-attachments/assets/d48dc7d9-c681-428b-9eaf-2b2d3b02581d" />
 
 
 ## What It Does
